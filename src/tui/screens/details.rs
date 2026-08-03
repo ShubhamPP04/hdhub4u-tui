@@ -828,6 +828,7 @@ pub fn draw(frame: &mut Frame, area: Rect, state: &mut AppState, theme: &Theme) 
                         };
 
                         let is_fourk = file.get("_fourk_release").is_some();
+                        let is_hdhub4u = file.get("_hdhub4u_release").is_some();
                         let language = file
                             .get("language")
                             .and_then(|value| value.as_str())
@@ -855,7 +856,17 @@ pub fn draw(frame: &mut Frame, area: Rect, state: &mut AppState, theme: &Theme) 
                             ));
                         } else if is_fourk && stream_width >= 38 {
                             stream_spans.push(Span::styled(language.to_string(), secondary_style));
-                        } else if !is_fourk && stream_width >= 64 {
+                        } else if is_hdhub4u && stream_width >= 38 {
+                            let quality_label =
+                                file.get("title").and_then(|t| t.as_str()).unwrap_or("");
+                            stream_spans.push(Span::styled(
+                                crate::tui::text::truncate_width(
+                                    quality_label,
+                                    stream_width.saturating_sub(17).max(8),
+                                ),
+                                primary_style,
+                            ));
+                        } else if !is_fourk && !is_hdhub4u && stream_width >= 64 {
                             let fixed_width = 9 + 8 + 12;
                             let uploader = crate::tui::text::truncate_width(
                                 upload_by,
@@ -864,7 +875,7 @@ pub fn draw(frame: &mut Frame, area: Rect, state: &mut AppState, theme: &Theme) 
                             stream_spans
                                 .push(Span::styled(format!("{duration_str:<12}"), secondary_style));
                             stream_spans.push(Span::styled(uploader, secondary_style));
-                        } else if !is_fourk && stream_width >= 38 {
+                        } else if !is_fourk && !is_hdhub4u && stream_width >= 38 {
                             stream_spans.push(Span::styled(duration_str, secondary_style));
                         }
                         if is_selected {

@@ -16,15 +16,10 @@ struct MetaBlock {
     episode_count: Option<usize>,
 }
 
-/// Hosts that serve the actual media file or a resolver page we can follow.
-const DOWNLOAD_HOSTS: &[&str] = &[
-    "hubcdn.sbs",
-    "hubdrive.tips",
-    "gadgetsweb.xyz",
-    "hdstream4u.com",
-    "hubstream.art",
-    "hubcloud.",
-];
+/// Hosts whose links we can actually resolve to playable media.
+/// Dead/ad-gated hosts (hubcdn.sbs, gadgetsweb.xyz, hubstream.art) are
+/// excluded so unresolvable releases never appear in the stream list.
+const DOWNLOAD_HOSTS: &[&str] = &["hubdrive.tips", "hubcloud.", "hdstream4u.com"];
 
 pub fn parse_search(base: &Url, html: &str) -> Result<Vec<CatalogItem>, HdHub4uError> {
     let document = Html::parse_document(html);
@@ -804,10 +799,16 @@ pub fn releases_to_moviebox_json(releases: &[Release]) -> serde_json::Value {
                 .as_deref()
                 .and_then(|quality| quality.trim_end_matches('p').parse::<u64>().ok())
                 .unwrap_or_default();
+            // Build a clean display title: quality + codec (e.g. "720p HEVC 10Bit")
+            let display_title = match (&release.quality, &release.codec) {
+                (Some(q), Some(c)) => format!("{q} · {c}"),
+                (Some(q), None) => q.clone(),
+                (None, _) => clean_display_label(&release.filename),
+            };
             serde_json::json!({
                 "resourceId": format!("hdhub4u-{}", index),
                 "resourceLink": release.mirrors.first().map(|mirror| mirror.resolver_url.clone()),
-                "title": release.filename,
+                "title": display_title,
                 "fileName": release.filename,
                 "size": release.size_bytes.map(|size| size.to_string()),
                 "resolution": resolution,
@@ -821,4 +822,17 @@ pub fn releases_to_moviebox_json(releases: &[Release]) -> serde_json::Value {
         })
         .collect::<Vec<_>>();
     serde_json::Value::Array(list)
+}
+
+/// Strip emojis and noise from a raw download label for display.
+fn clean_display_label(label: &str) -> String {
+    label
+        .replace(['⚡', '🔥', '✅', '⭐'], "")
+        .replace('[', "(")
+        .replace(']', ")")
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .trim()
+        .to_string()
 }
