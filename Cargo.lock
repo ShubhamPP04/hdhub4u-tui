@@ -958,7 +958,7 @@ dependencies = [
 
 [[package]]
 name = "hdhub4u-tui"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "base64",
  "crossterm",

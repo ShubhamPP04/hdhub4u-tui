@@ -1,11 +1,11 @@
 [package]
 name = "hdhub4u-tui"
 exclude = ["assets/", ".github/", "scripts/", "install.sh", "install.ps1"]
-version = "0.1.8"
+version = "0.1.9"
 edition = "2024"
 description = "A terminal client for finding and streaming movies and TV shows from HDHub4u and other sources."
-repository = "https://github.com/mesamirh/MovieBox-Tui"
-homepage = "https://github.com/mesamirh/MovieBox-Tui"
+repository = "https://github.com/ShubhamPP04/hdhub4u-tui"
+homepage = "https://github.com/ShubhamPP04/hdhub4u-tui"
 license = "MIT OR Apache-2.0"
 keywords = ["tui", "hdhub4u", "streaming", "movies", "cli"]
 categories = ["command-line-utilities", "multimedia"]
