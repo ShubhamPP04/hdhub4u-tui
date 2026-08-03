@@ -3452,23 +3452,28 @@ impl App {
                             "Resolving the selected mirror.",
                         );
                         let sender = self.action_sender.clone();
-                        let resolve: tokio::task::JoinHandle<
-                            Result<PlaybackSource, String>,
-                        > = match self.state.active_provider {
-                            ProviderKind::FourKHdHub => {
-                                let client = self.fourk_client.clone();
-                                tokio::spawn(async move {
-                                    client.resolve_release(&release).await.map_err(|e| e.to_string())
-                                })
-                            }
-                            ProviderKind::HdHub4u => {
-                                let client = self.hdhub4u_client.clone();
-                                tokio::spawn(async move {
-                                    client.resolve_release(&release).await.map_err(|e| e.to_string())
-                                })
-                            }
-                            _ => unreachable!("provider checked above"),
-                        };
+                        let resolve: tokio::task::JoinHandle<Result<PlaybackSource, String>> =
+                            match self.state.active_provider {
+                                ProviderKind::FourKHdHub => {
+                                    let client = self.fourk_client.clone();
+                                    tokio::spawn(async move {
+                                        client
+                                            .resolve_release(&release)
+                                            .await
+                                            .map_err(|e| e.to_string())
+                                    })
+                                }
+                                ProviderKind::HdHub4u => {
+                                    let client = self.hdhub4u_client.clone();
+                                    tokio::spawn(async move {
+                                        client
+                                            .resolve_release(&release)
+                                            .await
+                                            .map_err(|e| e.to_string())
+                                    })
+                                }
+                                _ => unreachable!("provider checked above"),
+                            };
                         tokio::spawn(async move {
                             match resolve.await {
                                 Ok(Ok(source)) => {

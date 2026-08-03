@@ -33,8 +33,8 @@ impl Default for HdHub4uClient {
 
 impl HdHub4uClient {
     pub fn new() -> Self {
-        let base = std::env::var("HDHUB4U_HDHUB4U_URL")
-            .unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
+        let base =
+            std::env::var("HDHUB4U_HDHUB4U_URL").unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
         Self::with_base_url(&base).unwrap_or_else(|_| Self {
             client: build_client(),
             base_url: Url::parse(DEFAULT_BASE_URL).expect("valid default HDHub4u URL"),
@@ -42,8 +42,7 @@ impl HdHub4uClient {
     }
 
     pub fn with_base_url(base: &str) -> Result<Self, HdHub4uError> {
-        let base_url =
-            Url::parse(base).map_err(|_| HdHub4uError::InvalidUrl(base.to_string()))?;
+        let base_url = Url::parse(base).map_err(|_| HdHub4uError::InvalidUrl(base.to_string()))?;
         if base_url.scheme() != "https" {
             return Err(HdHub4uError::InvalidUrl(base.to_string()));
         }
@@ -78,9 +77,7 @@ impl HdHub4uClient {
 
         let mut urls = self.fetch_post_sitemap_urls().await?;
         urls.retain(|u| {
-            let slug = u
-                .trim_start_matches('/')
-                .trim_end_matches('/');
+            let slug = u.trim_start_matches('/').trim_end_matches('/');
             let lower = slug.to_ascii_lowercase();
             tokens.iter().all(|tok| lower.contains(tok))
         });
@@ -119,7 +116,10 @@ impl HdHub4uClient {
     }
 
     async fn fetch_post_sitemap_urls(&self) -> Result<Vec<String>, HdHub4uError> {
-        let index_url = self.base_url.join("sitemap.xml").unwrap_or(self.base_url.clone());
+        let index_url = self
+            .base_url
+            .join("sitemap.xml")
+            .unwrap_or(self.base_url.clone());
         let index_xml = self.fetch_text(index_url).await?;
         let post_sitemap_urls = extract_sitemap_locs(&index_xml, "post-sitemap");
         let mut all = Vec::new();
@@ -150,10 +150,7 @@ impl HdHub4uClient {
         parser::parse_releases(&html, season, episode)
     }
 
-    pub async fn resolve_release(
-        &self,
-        release: &Release,
-    ) -> Result<PlaybackSource, HdHub4uError> {
+    pub async fn resolve_release(&self, release: &Release) -> Result<PlaybackSource, HdHub4uError> {
         if release.provider != ProviderKind::HdHub4u {
             return Err(HdHub4uError::Parse(
                 "release belongs to another provider".into(),
@@ -226,7 +223,8 @@ async fn resolve_mirror(
     client: &reqwest::Client,
     resolver_url: &str,
 ) -> Result<Vec<(String, String, Vec<(String, String)>)>, HdHub4uError> {
-    let parsed = Url::parse(resolver_url).map_err(|_| HdHub4uError::InvalidUrl(resolver_url.into()))?;
+    let parsed =
+        Url::parse(resolver_url).map_err(|_| HdHub4uError::InvalidUrl(resolver_url.into()))?;
     let host = parsed.host_str().unwrap_or_default().to_ascii_lowercase();
 
     if host.starts_with("hubdrive.") {
@@ -309,9 +307,7 @@ async fn resolve_hdstream4u(
     let mut candidates = Vec::new();
     for (suffix, label) in [("_n", "HD"), ("_l", "SD")] {
         let url = format!("{morencius_base}{suffix}");
-        if hubcloud::validate_playback_url(&url).is_ok()
-            && dl_html.contains(&url)
-        {
+        if hubcloud::validate_playback_url(&url).is_ok() && dl_html.contains(&url) {
             candidates.push((url, format!("EarnVids {label}"), Vec::new()));
         }
     }
@@ -337,7 +333,12 @@ fn tokenize_query(query: &str) -> Vec<String> {
         .to_ascii_lowercase()
         .split(|c: char| !c.is_alphanumeric())
         .filter(|t| t.len() >= 2)
-        .filter(|t| !matches!(*t, "the" | "a" | "an" | "of" | "and" | "in" | "on" | "at" | "to"))
+        .filter(|t| {
+            !matches!(
+                *t,
+                "the" | "a" | "an" | "of" | "and" | "in" | "on" | "at" | "to"
+            )
+        })
         .map(|t| t.to_string())
         .collect::<Vec<_>>()
         .into_iter()

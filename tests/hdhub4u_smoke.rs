@@ -12,8 +12,14 @@ async fn hdhub4u_search_details_resolve() {
         Ok(items) => {
             println!("search returned {} items", items.len());
             for it in items.iter().take(5) {
-                println!("  id={} title={:?} type={:?} year={:?} poster={:?}",
-                    it.id.value, it.title, it.media_type, it.year, it.poster_url.is_some());
+                println!(
+                    "  id={} title={:?} type={:?} year={:?} poster={:?}",
+                    it.id.value,
+                    it.title,
+                    it.media_type,
+                    it.year,
+                    it.poster_url.is_some()
+                );
             }
         }
         Err(e) => println!("search error: {e:?}"),
@@ -53,8 +59,13 @@ async fn hdhub4u_search_details_resolve() {
         Ok(rs) => {
             println!("releases: {}", rs.len());
             for r in rs.iter() {
-                println!("  filename={:?} quality={:?} size={:?} mirrors={}",
-                    r.filename, r.quality, r.size_bytes, r.mirrors.len());
+                println!(
+                    "  filename={:?} quality={:?} size={:?} mirrors={}",
+                    r.filename,
+                    r.quality,
+                    r.size_bytes,
+                    r.mirrors.len()
+                );
                 for m in r.mirrors.iter().take(3) {
                     println!("    mirror: {} -> {}", m.label, m.resolver_url);
                 }
@@ -69,7 +80,11 @@ async fn hdhub4u_search_details_resolve() {
     println!("\n--- RESOLVE ---");
     let mut resolved_ok = false;
     for (idx, release) in rs.iter().enumerate().take(5) {
-        println!("trying release #{idx}: {} -> {} mirror(s)", release.filename, release.mirrors.len());
+        println!(
+            "trying release #{idx}: {} -> {} mirror(s)",
+            release.filename,
+            release.mirrors.len()
+        );
         let resolved = client.resolve_release(release).await;
         match &resolved {
             Ok(src) => {
@@ -81,7 +96,10 @@ async fn hdhub4u_search_details_resolve() {
             Err(e) => println!("  resolve error: {e}"),
         }
     }
-    assert!(resolved_ok, "at least one release should resolve to a playable URL");
+    assert!(
+        resolved_ok,
+        "at least one release should resolve to a playable URL"
+    );
 }
 
 #[tokio::test]
@@ -104,11 +122,19 @@ async fn hdhub4u_series_releases() {
     }
 
     println!("\n--- SERIES RELEASES (s=1 e=1) ---");
-    let releases = client.releases(id, 1, 1).await.expect("releases should parse");
+    let releases = client
+        .releases(id, 1, 1)
+        .await
+        .expect("releases should parse");
     println!("releases: {}", releases.len());
     for r in releases.iter().take(3) {
-        println!("  filename={:?} quality={:?} episode={:?} mirrors={}",
-            r.filename, r.quality, r.episode, r.mirrors.len());
+        println!(
+            "  filename={:?} quality={:?} episode={:?} mirrors={}",
+            r.filename,
+            r.quality,
+            r.episode,
+            r.mirrors.len()
+        );
     }
     assert!(!releases.is_empty(), "series should have releases for ep1");
 }

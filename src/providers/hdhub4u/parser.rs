@@ -7,6 +7,15 @@ use reqwest::Url;
 use scraper::{ElementRef, Html, Selector};
 use std::collections::BTreeMap;
 
+struct MetaBlock {
+    imdb: Option<String>,
+    stars: Option<String>,
+    director: Option<String>,
+    language: Option<String>,
+    quality: Option<String>,
+    episode_count: Option<usize>,
+}
+
 /// Hosts that serve the actual media file or a resolver page we can follow.
 const DOWNLOAD_HOSTS: &[&str] = &[
     "hubcdn.sbs",
@@ -114,8 +123,15 @@ pub fn parse_details(id: &str, html: &str) -> Result<MediaDetails, HdHub4uError>
     let media_type = classify_media_type(id, &raw_title);
 
     let genres = extract_genres(&document);
-    let (imdb_rating, stars, director, language, quality, episode_count) =
-        extract_meta_block(&document);
+    let meta = extract_meta_block(&document);
+    let MetaBlock {
+        imdb: imdb_rating,
+        stars,
+        director,
+        language,
+        quality,
+        episode_count,
+    } = meta;
     let poster = extract_og_image(&document);
     let description = extract_storyline(&document);
     let seasons = parse_seasons(&document, media_type, episode_count);
@@ -203,11 +219,7 @@ pub fn parse_releases(
         };
 
         let key = if let Some(n) = ep_num {
-            format!(
-                "s{:02}e{:02}",
-                if season > 0 { season } else { 1 },
-                n
-            )
+            format!("s{:02}e{:02}", if season > 0 { season } else { 1 }, n)
         } else {
             // Movie: each quality/size link is a separate release, not a mirror.
             label.clone()
@@ -249,7 +261,8 @@ pub fn extract_hubcloud_drive_url(html: &str) -> Option<String> {
         let raw = node.value().attr("href")?;
         let url = Url::parse(raw).ok()?;
         let host = url.host_str()?;
-        (host.starts_with("hubcloud.") && url.path().starts_with("/drive/")).then(|| url.to_string())
+        (host.starts_with("hubcloud.") && url.path().starts_with("/drive/"))
+            .then(|| url.to_string())
     })
 }
 
@@ -265,9 +278,7 @@ pub fn extract_morencius_download_url(html: &str) -> Option<String> {
     })
 }
 
-fn extract_meta_block(
-    document: &Html,
-) -> (Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<usize>) {
+fn extract_meta_block(document: &Html) -> MetaBlock {
     let strong = selector("strong").unwrap();
     let mut imdb: Option<String> = None;
     let mut stars: Option<String> = None;
@@ -280,34 +291,27 @@ fn extract_meta_block(
         let text = node.text().collect::<String>().trim().to_lowercase();
         let sibling_text = node
             .next_sibling()
-            .and_then(|s| ElementRef::wrap(s))
+            .and_then(ElementRef::wrap)
             .map(|e| e.text().collect::<String>().trim().to_string())
             .or_else(|| {
                 // value may be inside an <a> following the <strong>
-                node.parent()
-                    .and_then(ElementRef::wrap)
-                    .map(|p| {
-                        let full = p.text().collect::<String>();
-                        // strip the label prefix
-                        full.split(':').nth(1).map(|s| s.trim().to_string())
-                    })
-                    .flatten()
+                node.parent().and_then(ElementRef::wrap).and_then(|p| {
+                    let full = p.text().collect::<String>();
+                    // strip the label prefix
+                    full.split(':').nth(1).map(|s| s.trim().to_string())
+                })
             });
         let value = sibling_text;
         match text.trim_end_matches(':') {
-            "imdb rating" | "imdb" | "rating" => {
-                if imdb.is_none() {
-                    imdb = value.or_else(|| extract_imdb_link(document));
-                }
+            "imdb rating" | "imdb" | "rating" if imdb.is_none() => {
+                imdb = value.or_else(|| extract_imdb_link(document));
             }
             "stars" => stars = value.or(stars),
             "director" | "creator" | "creators" => director = value.or(director),
             "language" | "languages" => language = value.or(language),
             "quality" => quality = value.or(quality),
-            "no. of episodes" => {
-                if episode_count.is_none() {
-                    episode_count = value.and_then(|v| parse_season_count(&v));
-                }
+            "no. of episodes" if episode_count.is_none() => {
+                episode_count = value.and_then(|v| parse_season_count(&v));
             }
             _ => {}
         }
@@ -319,7 +323,14 @@ fn extract_meta_block(
     if episode_count.is_none() {
         episode_count = extract_episode_count_from_text(document);
     }
-    (imdb, stars, director, language, quality, episode_count)
+    MetaBlock {
+        imdb,
+        stars,
+        director,
+        language,
+        quality,
+        episode_count,
+    }
 }
 
 fn extract_imdb_link(document: &Html) -> Option<String> {
@@ -431,11 +442,7 @@ fn extract_storyline(document: &Html) -> Option<String> {
         .or_else(|| tail.find("Download "))
         .unwrap_or(tail.len().min(600));
     let story = tail[..end].trim().to_string();
-    if story.is_empty() {
-        None
-    } else {
-        Some(story)
-    }
+    if story.is_empty() { None } else { Some(story) }
 }
 
 fn parse_seasons(
@@ -697,10 +704,30 @@ fn parse_season_count(value: &str) -> Option<usize> {
 fn is_genre(value: &str) -> bool {
     let lower = value.to_ascii_lowercase();
     const GENRES: &[&str] = &[
-        "action", "adventure", "animation", "biography", "comedy", "crime", "documentary",
-        "drama", "family", "fantasy", "history", "horror", "music", "musical", "mystery",
-        "romance", "romantic", "sci-fi", "science fiction", "sport", "thriller", "war",
-        "adult", "classic",
+        "action",
+        "adventure",
+        "animation",
+        "biography",
+        "comedy",
+        "crime",
+        "documentary",
+        "drama",
+        "family",
+        "fantasy",
+        "history",
+        "horror",
+        "music",
+        "musical",
+        "mystery",
+        "romance",
+        "romantic",
+        "sci-fi",
+        "science fiction",
+        "sport",
+        "thriller",
+        "war",
+        "adult",
+        "classic",
     ];
     GENRES.iter().any(|g| lower == *g || lower.contains(g))
 }
@@ -799,4 +826,3 @@ pub fn releases_to_moviebox_json(releases: &[Release]) -> serde_json::Value {
         .collect();
     serde_json::json!({ "results": rows })
 }
-
