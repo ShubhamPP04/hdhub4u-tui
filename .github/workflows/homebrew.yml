@@ -1,0 +1,52 @@
+name: Update Homebrew Formula
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  update-homebrew:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Release Data
+        id: release
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(curl -sI "https://github.com/${{ github.repository }}/releases/latest" | grep -i '^location:' | awk -F '/' '{print $NF}' | tr -d '\r')
+          fi
+          CLEAN_VERSION="${VERSION#v}"
+          echo "version=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION"
+          curl -fsSL "$BASE_URL/MovieBox_macOS_Universal.tar.gz" -o macos.tar.gz
+          curl -fsSL "$BASE_URL/MovieBox_Linux_x64.tar.gz" -o linux-x64.tar.gz
+          curl -fsSL "$BASE_URL/MovieBox_Linux_arm64.tar.gz" -o linux-arm64.tar.gz
+          echo "macos_sha=$(sha256sum macos.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "linux_x64_sha=$(sha256sum linux-x64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "linux_arm64_sha=$(sha256sum linux-arm64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Update Formula
+        run: |
+          FORMULA_FILE="Formula/moviebox-tui.rb"
+          VERSION="${{ steps.release.outputs.version }}"
+          sed -i "s/VERSION = \".*\"/VERSION = \"$VERSION\"/" "$FORMULA_FILE"
+          sed -i "s/MACOS_SHA256 = \".*\"/MACOS_SHA256 = \"${{ steps.release.outputs.macos_sha }}\"/" "$FORMULA_FILE"
+          sed -i "s/LINUX_X64_SHA256 = \".*\"/LINUX_X64_SHA256 = \"${{ steps.release.outputs.linux_x64_sha }}\"/" "$FORMULA_FILE"
+          sed -i "s/LINUX_ARM64_SHA256 = \".*\"/LINUX_ARM64_SHA256 = \"${{ steps.release.outputs.linux_arm64_sha }}\"/" "$FORMULA_FILE"
+
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
+        with:
+          commit_message: "chore(homebrew): update formula to v${{ steps.release.outputs.version }}"
+          file_pattern: "Formula/moviebox-tui.rb"
+          branch: main
