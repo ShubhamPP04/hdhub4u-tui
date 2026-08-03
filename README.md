@@ -47,6 +47,7 @@ Release binaries currently cover:
 
 ```bash
 brew tap ShubhamPP04/hdhub4u-tui https://github.com/ShubhamPP04/homebrew-hdhub4u-tui
+brew trust shubhampp04/hdhub4u-tui
 brew install hdhub4u-tui
 ```
 
