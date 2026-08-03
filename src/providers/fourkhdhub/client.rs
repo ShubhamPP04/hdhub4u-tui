@@ -204,7 +204,7 @@ fn build_client() -> reqwest::Client {
     reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(20))
         .connect_timeout(std::time::Duration::from_secs(5))
-        .user_agent("Mozilla/5.0 MovieBox-TUI/0.1")
+        .user_agent("Mozilla/5.0 HDHub4u-TUI/0.1")
         .redirect(reqwest::redirect::Policy::limited(5))
         .build()
         .unwrap_or_default()

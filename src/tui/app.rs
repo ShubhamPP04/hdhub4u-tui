@@ -494,7 +494,7 @@ impl App {
             .as_ref()
             .and_then(|details| details.get("title"))
             .and_then(|title| title.as_str())
-            .unwrap_or("MovieBox-Tui_Stream");
+            .unwrap_or("hdhub4u-tui_Stream");
         let media_type = self
             .state
             .selected_details
@@ -534,7 +534,7 @@ impl App {
         let base_dir = dirs::download_dir()
             .or_else(|| dirs::home_dir().map(|h| h.join("Downloads")))
             .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join("MovieBox-TUI");
+            .join("hdhub4u-tui");
         let (target_dir, base_name) = if media_type == 2 {
             (
                 base_dir
@@ -1740,15 +1740,15 @@ impl App {
                 if lower_query == "/github" {
                     #[cfg(target_os = "windows")]
                     let _ = std::process::Command::new("cmd")
-                        .args(["/C", "start", "https://github.com/mesamirh/MovieBox-Tui"])
+                        .args(["/C", "start", "https://github.com/ShubhamPP04/hdhub4u-tui"])
                         .spawn();
                     #[cfg(target_os = "macos")]
                     let _ = std::process::Command::new("open")
-                        .arg("https://github.com/mesamirh/MovieBox-Tui")
+                        .arg("https://github.com/ShubhamPP04/hdhub4u-tui")
                         .spawn();
                     #[cfg(all(target_os = "linux", not(target_os = "android")))]
                     let _ = std::process::Command::new("xdg-open")
-                        .arg("https://github.com/mesamirh/MovieBox-Tui")
+                        .arg("https://github.com/ShubhamPP04/hdhub4u-tui")
                         .spawn();
                     self.state.search_query.clear();
                     self.state.input_mode = InputMode::Normal;
@@ -1856,7 +1856,7 @@ impl App {
                                         let _permit = permit;
                                         if let Ok(resp) = client
                                             .get(&url)
-                                            .header("User-Agent", "MovieBox-Tui/1.0")
+                                            .header("User-Agent", "hdhub4u-tui/0.1")
                                             .send()
                                             .await
                                         {
@@ -2222,7 +2222,7 @@ impl App {
                                     let _permit = permit;
                                     if let Ok(resp) = client
                                         .get(&url)
-                                        .header("User-Agent", "MovieBox-Tui/1.0")
+                                        .header("User-Agent", "hdhub4u-tui/0.1")
                                         .send()
                                         .await
                                     {
@@ -2432,7 +2432,7 @@ impl App {
                                     let _permit = permit;
                                     if let Ok(resp) = client
                                         .get(&url)
-                                        .header("User-Agent", "MovieBox-Tui/1.0")
+                                        .header("User-Agent", "hdhub4u-tui/0.1")
                                         .send()
                                         .await
                                     {
@@ -2940,7 +2940,7 @@ impl App {
                                     }
                                     if let Ok(resp) = client
                                         .get(&cover_url)
-                                        .header("User-Agent", "MovieBox-Tui/1.0")
+                                        .header("User-Agent", "hdhub4u-tui/0.1")
                                         .send()
                                         .await
                                     {
@@ -3017,7 +3017,7 @@ impl App {
                             }
                             if let Ok(resp) = client
                                 .get(&url)
-                                .header("User-Agent", "MovieBox-Tui/1.0")
+                                .header("User-Agent", "hdhub4u-tui/0.1")
                                 .send()
                                 .await
                             {
@@ -3147,7 +3147,7 @@ impl App {
                             .unwrap_or_default();
                         if let Ok(resp) = client
                             .get(&url_clone)
-                            .header("User-Agent", "MovieBox-Tui/1.0")
+                            .header("User-Agent", "hdhub4u-tui/0.1")
                             .send()
                             .await
                         {
@@ -3695,7 +3695,7 @@ impl App {
                             let client = reqwest::Client::new();
                             if let Ok(resp) = client
                                 .get(&url_clone)
-                                .header("User-Agent", "MovieBox-Tui/1.0")
+                                .header("User-Agent", "hdhub4u-tui/0.1")
                                 .send()
                                 .await
                             {
@@ -4678,7 +4678,7 @@ impl App {
                     self.state.notify(
                         NotificationKind::Info,
                         "Update Available",
-                        format!("Version v{} is available! Download at github.com/mesamirh/MovieBox-Tui", version),
+                        format!("Version v{} is available! Download at github.com/ShubhamPP04/hdhub4u-tui", version),
                     );
                 }
             }

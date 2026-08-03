@@ -38,7 +38,7 @@ pub fn safe_file_stem(value: &str) -> String {
         .collect::<String>();
     stem = stem.trim_matches(['.', ' ', '_']).to_string();
     if stem.is_empty() {
-        return "MovieBox-Tui_Stream".into();
+        return "hdhub4u-tui_Stream".into();
     }
     let upper = stem.to_ascii_uppercase();
     let reserved = matches!(upper.as_str(), "CON" | "PRN" | "AUX" | "NUL")

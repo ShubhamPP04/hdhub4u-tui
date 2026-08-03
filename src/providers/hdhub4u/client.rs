@@ -122,13 +122,26 @@ impl HdHub4uClient {
             .unwrap_or(self.base_url.clone());
         let index_xml = self.fetch_text(index_url).await?;
         let post_sitemap_urls = extract_sitemap_locs(&index_xml, "post-sitemap");
+
+        // Fetch all sitemap pages concurrently for speed.
+        let client = self.client.clone();
+        let fetches: Vec<_> = post_sitemap_urls
+            .iter()
+            .take(20)
+            .filter_map(|sm_url| {
+                let url = Url::parse(sm_url).ok()?;
+                let client = client.clone();
+                Some(async move {
+                    let resp = client.get(url).send().await.ok()?;
+                    let text = resp.text().await.ok()?;
+                    Some(extract_locs(&text))
+                })
+            })
+            .collect();
+        let results = futures::future::join_all(fetches).await;
         let mut all = Vec::new();
-        for sm_url in post_sitemap_urls.iter().take(20) {
-            if let Ok(url) = Url::parse(sm_url) {
-                if let Ok(xml) = self.fetch_text(url).await {
-                    all.extend(extract_locs(&xml));
-                }
-            }
+        for urls in results.into_iter().flatten() {
+            all.extend(urls);
         }
         Ok(all)
     }
@@ -421,8 +434,7 @@ fn build_client() -> reqwest::Client {
     reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(20))
         .connect_timeout(std::time::Duration::from_secs(5))
-        .user_agent("Mozilla/5.0 MovieBox-TUI/0.1")
-        .redirect(reqwest::redirect::Policy::limited(5))
+        .user_agent("Mozilla/5.0 HDHub4u-TUI/0.1")
         .build()
         .unwrap_or_default()
 }

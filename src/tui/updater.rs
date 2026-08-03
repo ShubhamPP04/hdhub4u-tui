@@ -1,5 +1,5 @@
-const OWNER: &str = "mesamirh";
-const REPOSITORY: &str = "MovieBox-Tui";
+const OWNER: &str = "ShubhamPP04";
+const REPOSITORY: &str = "hdhub4u-tui";
 
 pub async fn check(current: &str) -> Result<Option<String>, String> {
     let release = fetch_release().await?;
@@ -47,7 +47,7 @@ async fn fetch_release() -> Result<Release, String> {
 
 fn http_client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
-        .user_agent("MovieBox-Tui")
+        .user_agent("hdhub4u-tui")
         .timeout(std::time::Duration::from_secs(30))
         .connect_timeout(std::time::Duration::from_secs(10))
         .build()
