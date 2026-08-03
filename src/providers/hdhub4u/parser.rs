@@ -795,31 +795,30 @@ pub fn details_to_moviebox_json(details: &MediaDetails) -> serde_json::Value {
 }
 
 pub fn releases_to_moviebox_json(releases: &[Release]) -> serde_json::Value {
-    let rows: Vec<serde_json::Value> = releases
+    let list = releases
         .iter()
-        .map(|r| {
-            let mirrors: Vec<serde_json::Value> = r
-                .mirrors
-                .iter()
-                .map(|m| {
-                    serde_json::json!({
-                        "label": m.label,
-                        "resolver_url": m.resolver_url,
-                        "direct_file": m.direct_file,
-                    })
-                })
-                .collect();
+        .enumerate()
+        .map(|(index, release)| {
+            let resolution = release
+                .quality
+                .as_deref()
+                .and_then(|quality| quality.trim_end_matches('p').parse::<u64>().ok())
+                .unwrap_or_default();
             serde_json::json!({
-                "filename": r.filename,
-                "quality": r.quality,
-                "codec": r.codec,
-                "language": r.language,
-                "size_bytes": r.size_bytes,
-                "season": r.season,
-                "episode": r.episode,
-                "mirrors": mirrors,
+                "resourceId": format!("hdhub4u-{}", index),
+                "resourceLink": release.mirrors.first().map(|mirror| mirror.resolver_url.clone()),
+                "title": release.filename,
+                "fileName": release.filename,
+                "size": release.size_bytes.map(|size| size.to_string()),
+                "resolution": resolution,
+                "codecName": release.codec,
+                "language": release.language,
+                "sourceCount": release.mirrors.len(),
+                "se": release.season.unwrap_or_default(),
+                "ep": release.episode.unwrap_or_default(),
+                "_hdhub4u_release": release,
             })
         })
-        .collect();
-    serde_json::json!({ "results": rows })
+        .collect::<Vec<_>>();
+    serde_json::Value::Array(list)
 }

@@ -456,14 +456,21 @@ impl App {
     }
 
     fn get_selected_release(&self) -> Option<Release> {
-        self.state
+        let item = self
+            .state
             .selected_resources
             .as_ref()?
             .get("list")?
             .as_array()?
-            .get(self.state.resource_list_state.selected().unwrap_or(0))?
-            .get("_fourk_release")
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
+            .get(self.state.resource_list_state.selected().unwrap_or(0))?;
+
+        if let Some(value) = item.get("_fourk_release") {
+            return serde_json::from_value(value.clone()).ok();
+        }
+        if let Some(value) = item.get("_hdhub4u_release") {
+            return serde_json::from_value(value.clone()).ok();
+        }
+        None
     }
 
     fn start_resilient_download(&mut self, subtitle_url: Option<String>, link: Option<String>) {
