@@ -83,11 +83,11 @@ impl HdHub4uClient {
         });
         urls.truncate(40);
 
+        let client = self.client.clone();
         let items: Vec<CatalogItem> = urls
             .into_iter()
             .filter_map(|full_url| {
                 let parsed = Url::parse(&full_url).ok()?;
-                // Extract just the path (slug) from the full sitemap URL.
                 let slug = parsed.path().trim_matches('/').to_string();
                 if slug.is_empty() {
                     return None;
@@ -108,6 +108,33 @@ impl HdHub4uClient {
                 })
             })
             .collect();
+
+        // Fetch poster images concurrently by grabbing og:image from each post page.
+        let poster_fetches: Vec<_> = items
+            .iter()
+            .take(20)
+            .map(|item| {
+                let client = client.clone();
+                let url = self
+                    .provider_url(&item.id.value)
+                    .unwrap_or(self.base_url.clone());
+                async move {
+                    let resp = client.get(url).send().await.ok()?;
+                    let html = resp.text().await.ok()?;
+                    let document = scraper::Html::parse_document(&html);
+                    parser::extract_og_image(&document)
+                }
+            })
+            .collect();
+        let poster_results = futures::future::join_all(poster_fetches).await;
+
+        let mut items = items;
+        for (i, poster) in poster_results.into_iter().enumerate() {
+            if let Some(p) = poster {
+                items[i].poster_url = Some(p);
+            }
+        }
+
         if items.is_empty() {
             Err(HdHub4uError::Parse("no search results found".into()))
         } else {

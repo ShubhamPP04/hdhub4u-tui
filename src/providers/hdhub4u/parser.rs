@@ -422,7 +422,7 @@ fn find_meta_line(document: &Html, label: &str) -> Option<String> {
     None
 }
 
-fn extract_og_image(document: &Html) -> Option<String> {
+pub fn extract_og_image(document: &Html) -> Option<String> {
     let meta = selector("meta[property='og:image']").unwrap();
     document
         .select(&meta)
