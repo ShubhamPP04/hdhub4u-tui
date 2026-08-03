@@ -739,23 +739,20 @@ fn selector(value: &str) -> Result<Selector, HdHub4uError> {
 // --- moviebox JSON shape converters (mirror the fourkhdhub ones) ---
 
 pub fn search_to_moviebox_json(items: &[CatalogItem]) -> serde_json::Value {
-    let rows: Vec<serde_json::Value> = items
+    let subjects = items
         .iter()
         .map(|item| {
             serde_json::json!({
-                "id": item.id.value,
+                "subjectId": item.id.value,
                 "title": item.title,
-                "year": item.year,
-                "media_type": match item.media_type {
-                    MediaType::Movie => "movie",
-                    MediaType::Series => "series",
-                },
-                "poster_url": item.poster_url,
-                "season_count": item.season_count,
+                "subjectType": if item.media_type == MediaType::Series { 2 } else { 1 },
+                "releaseDate": item.year,
+                "cover": { "url": item.poster_url },
+                "season": item.season_count.unwrap_or_default()
             })
         })
-        .collect();
-    serde_json::json!({ "results": rows })
+        .collect::<Vec<_>>();
+    serde_json::json!({ "results": [{ "subjects": subjects }] })
 }
 
 pub fn details_to_moviebox_json(details: &MediaDetails) -> serde_json::Value {
