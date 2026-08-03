@@ -12,7 +12,7 @@ use crate::providers::{
         releases_to_moviebox_json as hdhub4u_releases_to_moviebox_json,
         search_to_moviebox_json as hdhub4u_search_to_moviebox_json,
     },
-    models::{PlaybackSource, ProviderKind, Release, RequestContext},
+    models::{PlaybackSource, ProviderKind, Release, RequestContext, SourceMirror},
     moviebox::client::MovieBoxClient,
 };
 use crate::tui::{
@@ -470,7 +470,55 @@ impl App {
         if let Some(value) = item.get("_hdhub4u_release") {
             return serde_json::from_value(value.clone()).ok();
         }
-        None
+
+        // Fallback: reconstruct from resourceLink and metadata fields.
+        // This handles cached data where the embedded _release wasn't stored.
+        let resource_link = item.get("resourceLink").and_then(|l| l.as_str())?;
+        if resource_link.is_empty() {
+            return None;
+        }
+        let provider = if item.get("_fourk_release").is_some() {
+            ProviderKind::FourKHdHub
+        } else {
+            ProviderKind::HdHub4u
+        };
+        Some(Release {
+            provider,
+            filename: item
+                .get("fileName")
+                .or_else(|| item.get("title"))
+                .and_then(|t| t.as_str())
+                .unwrap_or("Unknown")
+                .to_string(),
+            quality: item
+                .get("resolution")
+                .and_then(|r| r.as_u64())
+                .map(|r| format!("{r}p")),
+            codec: item
+                .get("codecName")
+                .and_then(|c| c.as_str())
+                .map(String::from),
+            language: item
+                .get("language")
+                .and_then(|l| l.as_str())
+                .map(String::from),
+            size_bytes: item
+                .get("size")
+                .and_then(|s| s.as_str())
+                .and_then(|s| s.parse().ok()),
+            season: item.get("se").and_then(|s| s.as_u64()).map(|s| s as usize),
+            episode: item.get("ep").and_then(|e| e.as_u64()).map(|e| e as usize),
+            mirrors: vec![SourceMirror {
+                label: item
+                    .get("title")
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("Mirror")
+                    .to_string(),
+                resolver_url: resource_link.to_string(),
+                headers: Vec::new(),
+                direct_file: false,
+            }],
+        })
     }
 
     fn start_resilient_download(&mut self, subtitle_url: Option<String>, link: Option<String>) {
@@ -3276,6 +3324,12 @@ impl App {
                                 }
                             }
                         });
+                    } else {
+                        self.state.notify(
+                            NotificationKind::Warning,
+                            "No stream selected",
+                            "Select a stream from the list first.",
+                        );
                     }
                     return None;
                 }
