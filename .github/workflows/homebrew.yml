@@ -11,11 +11,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          fetch-depth: 0
-
       - name: Get Release Data
         id: release
         run: |
@@ -26,18 +21,28 @@ jobs:
           CLEAN_VERSION="${VERSION#v}"
           echo "version=$CLEAN_VERSION" >> $GITHUB_OUTPUT
           echo "tag=$VERSION" >> $GITHUB_OUTPUT
-          
+
           BASE_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION"
-          curl -fsSL "$BASE_URL/MovieBox_macOS_Universal.tar.gz" -o macos.tar.gz
-          curl -fsSL "$BASE_URL/MovieBox_Linux_x64.tar.gz" -o linux-x64.tar.gz
-          curl -fsSL "$BASE_URL/MovieBox_Linux_arm64.tar.gz" -o linux-arm64.tar.gz
+          curl -fsSL "$BASE_URL/hdhub4u_macOS_Universal.tar.gz" -o macos.tar.gz
+          curl -fsSL "$BASE_URL/hdhub4u_Linux_x64.tar.gz" -o linux-x64.tar.gz
+          curl -fsSL "$BASE_URL/hdhub4u_Linux_arm64.tar.gz" -o linux-arm64.tar.gz
           echo "macos_sha=$(sha256sum macos.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
           echo "linux_x64_sha=$(sha256sum linux-x64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
           echo "linux_arm64_sha=$(sha256sum linux-arm64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
 
+      - name: Checkout Homebrew tap repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ShubhamPP04/homebrew-hdhub4u-tui
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Update Formula
         run: |
-          FORMULA_FILE="Formula/moviebox-tui.rb"
+          FORMULA_FILE="Formula/hdhub4u-tui.rb"
+          if [ ! -f "$FORMULA_FILE" ]; then
+            echo "Formula file not found: $FORMULA_FILE"
+            exit 1
+          fi
           VERSION="${{ steps.release.outputs.version }}"
           sed -i "s/VERSION = \".*\"/VERSION = \"$VERSION\"/" "$FORMULA_FILE"
           sed -i "s/MACOS_SHA256 = \".*\"/MACOS_SHA256 = \"${{ steps.release.outputs.macos_sha }}\"/" "$FORMULA_FILE"
@@ -48,5 +53,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
         with:
           commit_message: "chore(homebrew): update formula to v${{ steps.release.outputs.version }}"
-          file_pattern: "Formula/moviebox-tui.rb"
+          file_pattern: "Formula/hdhub4u-tui.rb"
           branch: main

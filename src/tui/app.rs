@@ -70,7 +70,7 @@ impl App {
         let mut state = AppState::default();
 
         if let Some(config_dir) = dirs::config_dir() {
-            let config_path = config_dir.join("moviebox-tui").join("config.json");
+            let config_path = config_dir.join("hdhub4u-tui").join("config.json");
             if let Ok(config_str) = std::fs::read_to_string(config_path) {
                 if let Ok(config_json) = serde_json::from_str::<serde_json::Value>(&config_str) {
                     if let Some(auto_update) =
@@ -136,7 +136,7 @@ impl App {
 
     fn persist_config(&self) {
         if let Some(config_dir) = dirs::config_dir() {
-            let app_dir = config_dir.join("moviebox-tui");
+            let app_dir = config_dir.join("hdhub4u-tui");
             if std::fs::create_dir_all(&app_dir).is_err() {
                 return;
             }
@@ -1156,7 +1156,7 @@ impl App {
                                                     .unwrap_or_else(|| {
                                                         std::path::PathBuf::from(".")
                                                     });
-                                                config_path.push("moviebox-tui");
+                                                config_path.push("hdhub4u-tui");
                                                 std::fs::create_dir_all(&config_path).ok();
                                                 config_path.push("tv_config.json");
                                                 if let Ok(json) =
@@ -1437,7 +1437,7 @@ impl App {
                     tokio::spawn(async move {
                         let mut config_path =
                             dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
-                        config_path.push("moviebox-tui");
+                        config_path.push("hdhub4u-tui");
                         config_path.push("tv_config.json");
 
                         let mut loaded_urls = Vec::new();

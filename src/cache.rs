@@ -77,7 +77,7 @@ fn hash_key(value: &str) -> String {
 
 pub fn get_provider_cache_dir(provider: ProviderKind, subdir: &str) -> PathBuf {
     let mut path = dirs::cache_dir().unwrap_or_else(std::env::temp_dir);
-    path.push("moviebox-tui");
+    path.push("hdhub4u-tui");
     path.push(provider.cache_key());
     path.push(subdir);
     if !path.exists() {
@@ -265,7 +265,7 @@ pub fn invalidate_provider_stream_cache(
 
 pub fn clear_all_cache() {
     let mut path = dirs::cache_dir().unwrap_or_else(std::env::temp_dir);
-    path.push("moviebox-tui");
+    path.push("hdhub4u-tui");
     if path.exists() {
         let _ = fs::remove_dir_all(&path);
     }
@@ -274,7 +274,7 @@ pub fn clear_all_cache() {
 pub fn clean_old_cache_background() {
     tokio::task::spawn_blocking(|| {
         let mut path = dirs::cache_dir().unwrap_or_else(std::env::temp_dir);
-        path.push("moviebox-tui");
+        path.push("hdhub4u-tui");
         if !path.exists() {
             return;
         }
@@ -325,7 +325,7 @@ pub fn get_image_path(id: &str) -> PathBuf {
 
 fn get_namespaced_image_path(namespace: &str, id: &str) -> PathBuf {
     let mut path = dirs::cache_dir().unwrap_or_else(std::env::temp_dir);
-    path.push("moviebox-tui");
+    path.push("hdhub4u-tui");
     path.push(namespace);
     path.push("images");
     let _ = fs::create_dir_all(&path);

@@ -196,7 +196,7 @@ impl Theme {
         let has_no_color = std::env::var("NO_COLOR").is_ok();
         let is_light = crate::tui::terminal::background_is_light();
 
-        if let Ok(theme_env) = std::env::var("MOVIEBOX_THEME") {
+        if let Ok(theme_env) = std::env::var("HDHUB4U_THEME") {
             return Self::from_kind(ThemeKind::parse(&theme_env));
         }
 

@@ -7,14 +7,14 @@ log_warn() { echo -e "\033[1;33mWARNING: $1\033[0m"; }
 log_err() { echo -e "\033[0;31mERROR: $1\033[0m"; exit 1; }
 
 INSTALL_DIR="/usr/local/bin"
-BIN_NAME="moviebox-tui"
+BIN_NAME="hdhub4u-tui"
 APP_PATH="$INSTALL_DIR/$BIN_NAME"
 
 command -v curl >/dev/null 2>&1 || log_err "curl is required but not installed. Please install it."
 command -v tar >/dev/null 2>&1 || log_err "tar is required but not installed. Please install it."
 
 log_info "Fetching latest version information..."
-if ! LATEST_RELEASE=$(curl -fsSI "https://github.com/mesamirh/MovieBox-Tui/releases/latest"); then
+if ! LATEST_RELEASE=$(curl -fsSI "https://github.com/ShubhamPP04/hdhub4u-tui/releases/latest"); then
     log_err "Failed to fetch latest version from GitHub."
 fi
 VERSION=$(echo "$LATEST_RELEASE" | grep -i '^location:' | awk -F '/' '{print $NF}' | tr -d '\r') || true
@@ -28,10 +28,10 @@ if command -v "$BIN_NAME" > /dev/null 2>&1; then
         log_success "You already have the latest version ($VERSION) installed."
         exit 0
     fi
-    log_info "Updating MovieBox-TUI from v$CURRENT_VERSION to $VERSION..."
+    log_info "Updating HDHub4u-TUI from v$CURRENT_VERSION to $VERSION..."
     IS_UPDATE=1
 else
-    log_info "Installing MovieBox-TUI $VERSION..."
+    log_info "Installing HDHub4u-TUI $VERSION..."
     IS_UPDATE=0
 fi
 
@@ -39,12 +39,12 @@ OS="$(uname -s)"
 ARCH="$(uname -m)"
 
 if [ "$OS" = "Darwin" ]; then
-    FILE="MovieBox_macOS_Universal.tar.gz"
+    FILE="hdhub4u_macOS_Universal.tar.gz"
 elif [ "$OS" = "Linux" ]; then
     if [ "$ARCH" = "x86_64" ]; then
-        FILE="MovieBox_Linux_x64.tar.gz"
+        FILE="hdhub4u_Linux_x64.tar.gz"
     elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-        FILE="MovieBox_Linux_arm64.tar.gz"
+        FILE="hdhub4u_Linux_arm64.tar.gz"
     else
         log_err "Unsupported Linux architecture ($ARCH). Only x86_64 and arm64 are supported."
     fi
@@ -52,8 +52,8 @@ else
     log_err "Unsupported OS ($OS)."
 fi
 
-URL="https://github.com/mesamirh/MovieBox-Tui/releases/download/$VERSION/$FILE"
-CHECKSUM_URL="https://github.com/mesamirh/MovieBox-Tui/releases/download/$VERSION/SHA256SUMS"
+URL="https://github.com/ShubhamPP04/hdhub4u-tui/releases/download/$VERSION/$FILE"
+CHECKSUM_URL="https://github.com/ShubhamPP04/hdhub4u-tui/releases/download/$VERSION/SHA256SUMS"
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 

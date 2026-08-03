@@ -1,20 +1,20 @@
 <div align="center">
 
-# MovieBox-TUI
+# HDHub4u-TUI
 
 Search, browse, play, and download movies and series from a keyboard-first terminal interface.
 
-[![Crates.io](https://img.shields.io/crates/v/moviebox-tui.svg?logo=rust)](https://crates.io/crates/moviebox-tui)
-[![CI](https://github.com/mesamirh/MovieBox-Tui/actions/workflows/ci.yml/badge.svg)](https://github.com/mesamirh/MovieBox-Tui/actions/workflows/ci.yml)
+[![CI](https://github.com/ShubhamPP04/hdhub4u-tui/actions/workflows/ci.yml/badge.svg)](https://github.com/ShubhamPP04/hdhub4u-tui/actions/workflows/ci.yml)
+[![Release](https://github.com/ShubhamPP04/hdhub4u-tui/actions/workflows/release.yml/badge.svg)](https://github.com/ShubhamPP04/hdhub4u-tui/actions/workflows/release.yml)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 
-<img src="https://raw.githubusercontent.com/mesamirh/MovieBox-Tui/main/assets/screenshots/01-home-blocky.jpg" alt="MovieBox-TUI home screen" width="85%">
+<img src="https://raw.githubusercontent.com/ShubhamPP04/hdhub4u-tui/main/assets/screenshots/01-home-blocky.jpg" alt="HDHub4u-TUI home screen" width="85%">
 
 </div>
 
 ## Features
 
-- MovieBox and 4KHDHub catalogs with isolated search, details, stream, and image caches
+- HDHub4u, MovieBox, and 4KHDHub catalogs with isolated search, details, stream, and image caches
 - Movie, series, anime, episode, quality, and subtitle browsing
 - Playback through mpv, VLC, or IINA
 - HTTP header forwarding for protected playback sources
@@ -24,7 +24,7 @@ Search, browse, play, and download movies and series from a keyboard-first termi
 - Kitty, Sixel, iTerm2, and text poster rendering where supported
 - Configurable themes, update checks, and automatic cache cleanup
 
-MovieBox-TUI resolves links from upstream services. Availability can change when those services change.
+HDHub4u-TUI resolves links from upstream services. Availability can change when those services change.
 
 ## Requirements
 
@@ -46,8 +46,8 @@ Release binaries currently cover:
 ### Homebrew — macOS or Linux
 
 ```bash
-brew tap mesamirh/moviebox-tui https://github.com/mesamirh/MovieBox-Tui
-brew install moviebox-tui
+brew tap ShubhamPP04/hdhub4u-tui https://github.com/ShubhamPP04/homebrew-hdhub4u-tui
+brew install hdhub4u-tui
 ```
 
 The formula selects the correct macOS, Linux x86_64, or Linux ARM64 release.
@@ -55,7 +55,7 @@ The formula selects the correct macOS, Linux x86_64, or Linux ARM64 release.
 ### Install script — macOS or Linux
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mesamirh/MovieBox-Tui/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ShubhamPP04/hdhub4u-tui/main/install.sh | bash
 ```
 
 The script detects OS and CPU architecture, verifies the release SHA-256 checksum, then installs to `/usr/local/bin`. Without write access or `sudo`, it uses `~/.local/bin`.
@@ -63,32 +63,32 @@ The script detects OS and CPU architecture, verifies the release SHA-256 checksu
 ### PowerShell — Windows
 
 ```powershell
-irm https://raw.githubusercontent.com/mesamirh/MovieBox-Tui/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/ShubhamPP04/hdhub4u-tui/main/install.ps1 | iex
 ```
 
-The installer selects x86_64 or ARM64, verifies SHA-256, installs under `%LOCALAPPDATA%\MovieBox-Tui`, and adds that directory to the user PATH. Open a new terminal after first installation.
+The installer selects x86_64 or ARM64, verifies SHA-256, installs under `%LOCALAPPDATA%\hdhub4u-tui`, and adds that directory to the user PATH. Open a new terminal after first installation.
 
 ### Cargo
 
 Requires Rust 1.90 or newer:
 
 ```bash
-cargo install moviebox-tui --locked
+cargo install hdhub4u-tui --locked
 ```
 
 ### Build from source
 
 ```bash
-git clone https://github.com/mesamirh/MovieBox-Tui.git
-cd MovieBox-Tui
+git clone https://github.com/ShubhamPP04/hdhub4u-tui.git
+cd hdhub4u-tui
 cargo build --release --locked
 ```
 
-Binary location: `target/release/moviebox-tui` (`moviebox-tui.exe` on Windows).
+Binary location: `target/release/hdhub4u-tui` (`hdhub4u-tui.exe` on Windows).
 
 ## Player setup
 
-MovieBox-TUI checks standard application locations, PATH executables, and Linux Flatpak installations.
+HDHub4u-TUI checks standard application locations, PATH executables, and Linux Flatpak installations.
 
 Detected automatically:
 
@@ -100,22 +100,22 @@ Portable or custom installations can be selected with environment variables:
 
 | Player | Variable |
 | --- | --- |
-| mpv | `MOVIEBOX_MPV_PATH` |
-| VLC | `MOVIEBOX_VLC_PATH` |
-| IINA | `MOVIEBOX_IINA_PATH` |
+| mpv | `HDHUB4U_MPV_PATH` |
+| VLC | `HDHUB4U_VLC_PATH` |
+| IINA | `HDHUB4U_IINA_PATH` |
 
 macOS/Linux example:
 
 ```bash
-export MOVIEBOX_MPV_PATH="$HOME/Apps/mpv"
-moviebox-tui
+export HDHUB4U_MPV_PATH="$HOME/Apps/mpv"
+hdhub4u-tui
 ```
 
 Windows PowerShell example:
 
 ```powershell
-$env:MOVIEBOX_VLC_PATH = "D:\Apps\VLC\vlc.exe"
-moviebox-tui
+$env:HDHUB4U_VLC_PATH = "D:\Apps\VLC\vlc.exe"
+hdhub4u-tui
 ```
 
 IINA is macOS-only. mpv provides the broadest source-header compatibility.
@@ -125,7 +125,7 @@ IINA is macOS-only. mpv provides the broadest source-header compatibility.
 Run:
 
 ```bash
-moviebox-tui
+hdhub4u-tui
 ```
 
 ### Main controls
@@ -138,7 +138,7 @@ moviebox-tui
 | `o` | Choose another player |
 | `d` | Download selected episode or season |
 | `r` | Refresh current content |
-| `Ctrl+P` | Switch content provider |
+| `Tab` / `Ctrl+P` | Switch content provider |
 | `Ctrl+T` | Toggle IPTV mode |
 | `?` | Show help |
 | `q` | Quit |
@@ -164,7 +164,7 @@ moviebox-tui
 Downloads are stored under the operating system Downloads directory:
 
 ```text
-MovieBox-TUI/
+hdhub4u-tui/
 ├── Movies/
 └── Series/<title>/Season <number>/
 ```
@@ -175,13 +175,13 @@ Interrupted downloads preserve `.part` and resume metadata files. Starting the s
 
 ## Configuration and cache
 
-MovieBox-TUI uses standard OS directories:
+HDHub4u-TUI uses standard OS directories:
 
 | Platform | Configuration | Cache |
 | --- | --- | --- |
-| Linux | `${XDG_CONFIG_HOME:-~/.config}/moviebox-tui` | `${XDG_CACHE_HOME:-~/.cache}/moviebox-tui` |
-| macOS | `~/Library/Application Support/moviebox-tui` | `~/Library/Caches/moviebox-tui` |
-| Windows | `%APPDATA%\moviebox-tui` | `%LOCALAPPDATA%\moviebox-tui` |
+| Linux | `${XDG_CONFIG_HOME:-~/.config}/hdhub4u-tui` | `${XDG_CACHE_HOME:-~/.cache}/hdhub4u-tui` |
+| macOS | `~/Library/Application Support/hdhub4u-tui` | `~/Library/Caches/hdhub4u-tui` |
+| Windows | `%APPDATA%\hdhub4u-tui` | `%LOCALAPPDATA%\hdhub4u-tui` |
 
 Catalog providers use separate cache namespaces. Expired or invalid cache entries are discarded automatically; files older than seven days are cleaned at startup.
 
@@ -191,13 +191,13 @@ Homebrew:
 
 ```bash
 brew update
-brew upgrade moviebox-tui
+brew upgrade hdhub4u-tui
 ```
 
 Script installations: run the same install command again. Cargo installations:
 
 ```bash
-cargo install moviebox-tui --locked --force
+cargo install hdhub4u-tui --locked --force
 ```
 
 ## Uninstallation
@@ -205,27 +205,27 @@ cargo install moviebox-tui --locked --force
 Homebrew:
 
 ```bash
-brew uninstall moviebox-tui
-brew untap mesamirh/moviebox-tui
+brew uninstall hdhub4u-tui
+brew untap ShubhamPP04/hdhub4u-tui
 ```
 
 Script installation:
 
 ```bash
-sudo rm -f /usr/local/bin/moviebox-tui
-rm -f "$HOME/.local/bin/moviebox-tui"
+sudo rm -f /usr/local/bin/hdhub4u-tui
+rm -f "$HOME/.local/bin/hdhub4u-tui"
 ```
 
 Windows PowerShell:
 
 ```powershell
-Remove-Item -Recurse -Force "$env:LOCALAPPDATA\MovieBox-Tui"
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\hdhub4u-tui"
 ```
 
 Cargo:
 
 ```bash
-cargo uninstall moviebox-tui
+cargo uninstall hdhub4u-tui
 ```
 
 Configuration and cache directories remain until removed manually.
@@ -241,11 +241,11 @@ mpv --version
 vlc --version
 ```
 
-For portable installs, set corresponding `MOVIEBOX_*_PATH` variable.
+For portable installs, set corresponding `HDHUB4U_*_PATH` variable.
 
 ### Images do not render
 
-Image support depends on terminal protocol. Text UI remains usable without graphics. Resize/focus crashes involving Sixel should be reported with OS, terminal name, and `moviebox-tui --version`.
+Image support depends on terminal protocol. Text UI remains usable without graphics. Resize/focus crashes involving Sixel should be reported with OS, terminal name, and `hdhub4u-tui --version`.
 
 ### Linux command not found after script install
 
@@ -272,7 +272,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
 
 ## Legal
 
-MovieBox-TUI does not host media. It is not affiliated with MovieBox, 4KHDHub, IPTV providers, player projects, or terminal vendors. Users are responsible for complying with laws and service terms applicable to them.
+HDHub4u-TUI does not host media. It is not affiliated with HDHub4u, MovieBox, 4KHDHub, IPTV providers, player projects, or terminal vendors. Users are responsible for complying with laws and service terms applicable to them.
 
 ## License
 

@@ -94,7 +94,7 @@ fn mpv_command(
 
 #[cfg(target_os = "macos")]
 fn iina_command(url: &str, subtitle: Option<&str>, headers: &[(String, String)]) -> Command {
-    let configured = configured_executable("MOVIEBOX_IINA_PATH");
+    let configured = configured_executable("HDHUB4U_IINA_PATH");
     let mut command = if let Some(executable) = configured {
         Command::new(executable)
     } else if iina_app_exists() {
@@ -146,7 +146,7 @@ fn vlc_command(url: &str, subtitle: Option<&str>, headers: &[(String, String)]) 
 }
 
 fn mpv_executable() -> Option<String> {
-    if let Some(executable) = configured_executable("MOVIEBOX_MPV_PATH") {
+    if let Some(executable) = configured_executable("HDHUB4U_MPV_PATH") {
         return Some(executable);
     }
     let fallback = if cfg!(target_os = "windows") {
@@ -172,7 +172,7 @@ fn mpv_executable() -> Option<String> {
 }
 
 fn vlc_executable() -> Option<String> {
-    if let Some(executable) = configured_executable("MOVIEBOX_VLC_PATH") {
+    if let Some(executable) = configured_executable("HDHUB4U_VLC_PATH") {
         return Some(executable);
     }
     let fallback = if cfg!(target_os = "windows") {
@@ -212,7 +212,7 @@ fn vlc_executable() -> Option<String> {
 
 #[cfg(target_os = "macos")]
 fn iina_available() -> bool {
-    configured_executable("MOVIEBOX_IINA_PATH").is_some()
+    configured_executable("HDHUB4U_IINA_PATH").is_some()
         || iina_app_exists()
         || command_exists("iina")
 }

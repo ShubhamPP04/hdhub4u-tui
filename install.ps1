@@ -6,14 +6,14 @@ function Write-Success { param([string]$Message) Write-Host "$Message" -Foregrou
 function Write-Warn { param([string]$Message) Write-Host "WARNING: $Message" -ForegroundColor Yellow }
 function Write-Err { param([string]$Message) Write-Host "ERROR: $Message" -ForegroundColor Red; exit 1 }
 
-$InstallDir = "$env:LOCALAPPDATA\MovieBox-Tui"
-$ExePath = "$InstallDir\moviebox-tui.exe"
-$TempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("moviebox-tui-" + [guid]::NewGuid())
+$InstallDir = "$env:LOCALAPPDATA\hdhub4u-tui"
+$ExePath = "$InstallDir\hdhub4u-tui.exe"
+$TempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("hdhub4u-tui-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 
 Write-Info "Fetching latest version information..."
 try {
-    $Request = [System.Net.WebRequest]::Create("https://github.com/mesamirh/MovieBox-Tui/releases/latest")
+    $Request = [System.Net.WebRequest]::Create("https://github.com/ShubhamPP04/hdhub4u-tui/releases/latest")
     $Request.AllowAutoRedirect = $false
     $Response = $Request.GetResponse()
     $Location = $Response.Headers["Location"]
@@ -29,41 +29,41 @@ $CurrentVersion = "unknown"
 if (Test-Path $ExePath) {
     try {
         $CurrentVersionOutput = (& $ExePath --version 2>&1 | Out-String)
-        if ($CurrentVersionOutput -match "moviebox-tui\s+([\d\.]+)") {
+        if ($CurrentVersionOutput -match "hdhub4u-tui\s+([\d\.]+)") {
             $CurrentVersion = $matches[1]
             if ("v$CurrentVersion" -eq $Version) {
                 Write-Success "You already have the latest version ($Version) installed."
                 exit 0
             }
         }
-        Write-Info "Updating MovieBox-TUI from v$CurrentVersion to $Version..."
+        Write-Info "Updating HDHub4u-TUI from v$CurrentVersion to $Version..."
         $IsUpdate = $true
         
-        $RunningProcesses = Get-Process -Name "moviebox-tui" -ErrorAction SilentlyContinue
+        $RunningProcesses = Get-Process -Name "hdhub4u-tui" -ErrorAction SilentlyContinue
         if ($RunningProcesses) {
-            Write-Info "Stopping running instances of MovieBox-Tui..."
+            Write-Info "Stopping running instances of hdhub4u-tui..."
             $RunningProcesses | Stop-Process -Force
             Start-Sleep -Seconds 1
         }
     } catch {
-        Write-Info "Updating MovieBox-TUI to $Version..."
+        Write-Info "Updating HDHub4u-TUI to $Version..."
         $IsUpdate = $true
     }
 } else {
-    Write-Info "Installing MovieBox-TUI $Version..."
+    Write-Info "Installing HDHub4u-TUI $Version..."
 }
 
 $Architecture = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
 if ($Architecture -eq "ARM64") {
-    $ArchiveName = "MovieBox_Windows_arm64.zip"
+    $ArchiveName = "hdhub4u_Windows_arm64.zip"
 } elseif ($Architecture -eq "AMD64") {
-    $ArchiveName = "MovieBox_Windows_x64.zip"
+    $ArchiveName = "hdhub4u_Windows_x64.zip"
 } else {
     Write-Err "Unsupported Windows architecture: $Architecture"
 }
 $ZipFile = Join-Path $TempDir $ArchiveName
 $ChecksumFile = Join-Path $TempDir "SHA256SUMS"
-$BaseUrl = "https://github.com/mesamirh/MovieBox-Tui/releases/download/$Version"
+$BaseUrl = "https://github.com/ShubhamPP04/hdhub4u-tui/releases/download/$Version"
 $Url = "$BaseUrl/$ArchiveName"
 
 Write-Info "Downloading release archive..."
@@ -110,7 +110,7 @@ if ($UserPath -notmatch [regex]::Escape($InstallDir)) {
 }
 
 if ($IsUpdate) {
-    Write-Success "Update complete! Run 'moviebox-tui' to start."
+    Write-Success "Update complete! Run 'hdhub4u-tui' to start."
 } else {
-    Write-Success "Installation complete! Run 'moviebox-tui' to start."
+    Write-Success "Installation complete! Run 'hdhub4u-tui' to start."
 }
