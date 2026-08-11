@@ -103,6 +103,82 @@ pub fn parse_search(base: &Url, html: &str) -> Result<Vec<CatalogItem>, HdHub4uE
     Ok(items)
 }
 
+/// Parse the site's own `?s=` search results page (dooplay theme):
+/// `<div class="result-item"><article><div class="image">...<a href=".../watch/slug/"><img src="..." alt="TITLE" /><span class="movies">Movie</span></a>...`
+pub fn parse_site_search(base: &Url, html: &str) -> Result<Vec<CatalogItem>, HdHub4uError> {
+    let document = Html::parse_document(html);
+    let item = selector("div.result-item")?;
+    let link = selector("a[href]")?;
+    let img = selector("img")?;
+    let type_span = selector("span.movies, span.tvshows, span.series")?;
+
+    let base_host = base.host_str().unwrap_or_default();
+    let mut items = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    for node in document.select(&item) {
+        let mut post_url: Option<String> = None;
+        let mut title: Option<String> = None;
+        let mut poster: Option<String> = None;
+        let mut media_type = MediaType::Movie;
+
+        for a in node.select(&link) {
+            if let Some(href) = a.value().attr("href") {
+                if let Ok(url) = Url::parse(href) {
+                    if url.host_str() == Some(base_host) && url.path().contains("/watch/") {
+                        post_url = Some(url.path().to_string());
+                        if let Some(img_node) = a.select(&img).next() {
+                            poster =
+                                img_node
+                                    .value()
+                                    .attr("src")
+                                    .map(|s| s.to_string())
+                                    .or_else(|| {
+                                        img_node.value().attr("data-src").map(|s| s.to_string())
+                                    });
+                            title = img_node.value().attr("alt").map(|s| s.to_string());
+                        }
+                        if let Some(span) = a.select(&type_span).next() {
+                            let t = span.text().collect::<String>().to_ascii_lowercase();
+                            if t.contains("series") || t.contains("tv") {
+                                media_type = MediaType::Series;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if let (Some(id), Some(t)) = (post_url, title) {
+            let key = id.clone();
+            if seen.insert(key) {
+                let year = first_four_digit_year(&t);
+                let season_count = if media_type == MediaType::Series {
+                    detect_season_count(&id, &t)
+                } else {
+                    None
+                };
+                items.push(CatalogItem {
+                    id: ProviderMediaId {
+                        provider: ProviderKind::HdHub4u,
+                        value: id,
+                    },
+                    title: strip_trailing_year(&t),
+                    media_type,
+                    year,
+                    poster_url: poster,
+                    season_count,
+                });
+            }
+        }
+    }
+
+    if items.is_empty() {
+        return Err(HdHub4uError::Parse("no search results found".into()));
+    }
+    Ok(items)
+}
+
 pub fn parse_details(id: &str, html: &str) -> Result<MediaDetails, HdHub4uError> {
     let document = Html::parse_document(html);
     let h1 = selector("h1.page-title span.material-text, h1 span, h1")?;

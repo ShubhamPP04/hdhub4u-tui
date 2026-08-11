@@ -77,6 +77,20 @@ impl HdHub4uClient {
             return parser::parse_search(&base, &html);
         }
 
+        // Prefer the site's own `?s=` search — it returns full titles, posters,
+        // and media types, and covers content missing from the sitemap.
+        if let Ok((base, html)) = self
+            .fetch_first_ok(&format!("?s={}", urlencode_query(query)))
+            .await
+        {
+            if let Ok(items) = parser::parse_site_search(&base, &html) {
+                if !items.is_empty() {
+                    return Ok(items);
+                }
+            }
+        }
+
+        // Fallback: scan the post sitemaps for slugs containing every token.
         let mut urls = self.fetch_post_sitemap_urls().await?;
         urls.retain(|u| {
             let slug = u.trim_start_matches('/').trim_end_matches('/');
@@ -474,6 +488,21 @@ async fn resolve_hdstream4u(
     }
 }
 
+/// Percent-encode a search query for use in a URL query string.
+fn urlencode_query(query: &str) -> String {
+    let mut out = String::with_capacity(query.len());
+    for byte in query.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(byte as char)
+            }
+            b' ' => out.push('+'),
+            _ => out.push_str(&format!("%{byte:02X}")),
+        }
+    }
+    out
+}
+
 /// Lowercase, dedupe, drop common stopwords and short tokens from a search query.
 fn tokenize_query(query: &str) -> Vec<String> {
     query
@@ -497,6 +526,8 @@ fn tokenize_query(query: &str) -> Vec<String> {
 /// Convert a URL slug like "the-devils-mouth-2026-hindi-webrip-full-movie"
 /// into a human-readable title "The Devils Mouth 2026 Hindi Webrip Full Movie".
 fn slug_to_title(slug: &str) -> String {
+    // Newer hdhub4u.website URLs are /watch/{slug}/ — strip the prefix.
+    let slug = slug.trim_start_matches("watch/").trim_start_matches('/');
     slug.split('-')
         .map(|word| {
             let mut chars = word.chars();
