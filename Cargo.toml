@@ -1,7 +1,7 @@
 [package]
 name = "hdhub4u-tui"
 exclude = ["assets/", ".github/", "scripts/", "install.sh", "install.ps1"]
-version = "0.1.15"
+version = "0.1.16"
 edition = "2024"
 description = "A terminal client for finding and streaming movies and TV shows from HDHub4u and other sources."
 repository = "https://github.com/ShubhamPP04/hdhub4u-tui"

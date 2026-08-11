@@ -5,15 +5,15 @@ use crate::providers::models::{
 };
 use reqwest::Url;
 
-const DEFAULT_BASE_URL: &str = "https://new1.hdhub4u.af/";
+const DEFAULT_BASE_URL: &str = "https://hdhub4u.website/";
 
 /// Fallback mirrors tried in order when the primary domain is unreachable.
 /// The site rotates domains frequently (ISP blocks / takedowns), so the
 /// provider probes each candidate until one answers.
 const CANDIDATE_BASE_URLS: &[&str] = &[
+    "https://hdhub4u.website/",
     "https://new1.hdhub4u.af/",
     "https://new4.hdhub4u.cl/",
-    "https://hdhub4u.website/",
 ];
 
 #[derive(thiserror::Error, Debug)]
@@ -147,7 +147,13 @@ impl HdHub4uClient {
     async fn fetch_post_sitemap_urls(&self) -> Result<Vec<String>, HdHub4uError> {
         // Try candidate bases: the sitemap index may only exist on the live mirror.
         let (_base, index_xml) = self.fetch_first_ok("sitemap.xml").await?;
-        let post_sitemap_urls = extract_sitemap_locs(&index_xml, "post-sitemap");
+
+        // Old WordPress SEO plugin: post-sitemap1.xml, post-sitemap2.xml, ...
+        let mut post_sitemap_urls = extract_sitemap_locs(&index_xml, "post-sitemap");
+        // Newer WordPress core: wp-sitemap-posts-movies-1.xml (movies), wp-sitemap-posts-*.xml
+        if post_sitemap_urls.is_empty() {
+            post_sitemap_urls = extract_sitemap_locs(&index_xml, "wp-sitemap-posts");
+        }
 
         // Fetch all sitemap pages concurrently for speed.
         let client = self.client.clone();
@@ -329,12 +335,79 @@ async fn resolve_mirror(
         return resolve_hdstream4u(client, resolver_url).await;
     }
 
+    // New hdhub4u.website chain: `daday.ejuda.online/movz/hubcloud/stream.php?id=...`
+    // page contains `var originalLink = "https://pixeldrain.tech/u/{id}";`
+    if host.ends_with("ejuda.online") {
+        return resolve_ejuda_stream(client, resolver_url).await;
+    }
+
     // Unknown host: do not fall back to direct validation — hosts like
     // hubcdn.sbs return "File Deleted" HTML and gadgetsweb.xyz redirects to
     // ad gates, neither of which is playable media.
     Err(HdHub4uError::Parse(format!(
         "unsupported resolver host: {host}"
     )))
+}
+
+/// ejuda.online stream.php page embeds `var originalLink = "...";` pointing at
+/// a Pixeldrain-style share page. Convert it to the direct download URL.
+async fn resolve_ejuda_stream(
+    client: &reqwest::Client,
+    stream_url: &str,
+) -> Result<Vec<(String, String, Vec<(String, String)>)>, HdHub4uError> {
+    let response = client
+        .get(stream_url)
+        .send()
+        .await
+        .map_err(HdHub4uError::from)?
+        .error_for_status()
+        .map_err(HdHub4uError::from)?;
+
+    let content_type = response
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+
+    // Some ejuda endpoints (e.g. /vcloudz/) return the raw video bytes directly.
+    if !content_type.contains("html") {
+        let direct_url = response.url().to_string();
+        return Ok(vec![(direct_url, "Direct".to_string(), Vec::new())]);
+    }
+
+    let html = response.text().await.map_err(HdHub4uError::from)?;
+
+    // var originalLink = "https://pixeldrain.tech/u/2iS8NY7s";
+    let link = html
+        .split("originalLink")
+        .nth(1)
+        .and_then(|s| s.split('"').nth(1))
+        .map(str::trim)
+        .filter(|s| s.starts_with("http"))
+        .ok_or_else(|| HdHub4uError::Parse("ejuda stream originalLink missing".into()))?;
+
+    let parsed = Url::parse(link).map_err(|_| HdHub4uError::InvalidUrl(link.into()))?;
+    let host = parsed.host_str().unwrap_or_default().to_ascii_lowercase();
+
+    // Pixeldrain share page → direct download API URL.
+    if host.contains("pixeldrain") && parsed.path().starts_with("/u/") {
+        let file_id = parsed
+            .path()
+            .trim_start_matches("/u/")
+            .trim_end_matches('/');
+        if !file_id.is_empty() {
+            let direct = format!("https://pixeldrain.dev/api/file/{file_id}?download");
+            return Ok(vec![(direct, "PixelDrain".to_string(), Vec::new())]);
+        }
+    }
+
+    // Fall back to the raw link; preflight() will validate it.
+    Ok(vec![(
+        link.to_string(),
+        "PixelDrain".to_string(),
+        Vec::new(),
+    )])
 }
 
 /// hdstream4u.com/file/{id} embeds a `morencius.com/download/{id}` link whose page

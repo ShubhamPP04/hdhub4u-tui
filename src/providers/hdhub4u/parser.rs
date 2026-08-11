@@ -19,7 +19,12 @@ struct MetaBlock {
 /// Hosts whose links we can actually resolve to playable media.
 /// Dead/ad-gated hosts (hubcdn.sbs, gadgetsweb.xyz, hubstream.art) are
 /// excluded so unresolvable releases never appear in the stream list.
-const DOWNLOAD_HOSTS: &[&str] = &["hubdrive.tips", "hubcloud.", "hdstream4u.com"];
+const DOWNLOAD_HOSTS: &[&str] = &[
+    "hubdrive.tips",
+    "hubcloud.",
+    "hdstream4u.com",
+    "ejuda.online",
+];
 
 pub fn parse_search(base: &Url, html: &str) -> Result<Vec<CatalogItem>, HdHub4uError> {
     let document = Html::parse_document(html);
