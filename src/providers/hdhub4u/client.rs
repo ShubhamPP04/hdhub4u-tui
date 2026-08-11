@@ -5,7 +5,16 @@ use crate::providers::models::{
 };
 use reqwest::Url;
 
-const DEFAULT_BASE_URL: &str = "https://new4.hdhub4u.cl/";
+const DEFAULT_BASE_URL: &str = "https://new1.hdhub4u.af/";
+
+/// Fallback mirrors tried in order when the primary domain is unreachable.
+/// The site rotates domains frequently (ISP blocks / takedowns), so the
+/// provider probes each candidate until one answers.
+const CANDIDATE_BASE_URLS: &[&str] = &[
+    "https://new1.hdhub4u.af/",
+    "https://new4.hdhub4u.cl/",
+    "https://hdhub4u.website/",
+];
 
 #[derive(thiserror::Error, Debug)]
 pub enum HdHub4uError {
@@ -53,14 +62,7 @@ impl HdHub4uClient {
     }
 
     pub async fn health_check(&self) -> Result<(), HdHub4uError> {
-        let response = self.client.get(self.base_url.clone()).send().await?;
-        if !response.status().is_success() {
-            return Err(HdHub4uError::Parse(format!(
-                "health check returned {}",
-                response.status()
-            )));
-        }
-        Ok(())
+        self.fetch_first_ok("").await.map(|_| ())
     }
 
     /// Search by scanning the WordPress post sitemaps for URLs whose slug
@@ -71,8 +73,8 @@ impl HdHub4uClient {
         let tokens = tokenize_query(query);
         if tokens.is_empty() {
             // No query: return the homepage listing (latest releases).
-            let html = self.fetch_text(self.base_url.clone()).await?;
-            return parser::parse_search(&self.base_url, &html);
+            let (base, html) = self.fetch_first_ok("").await?;
+            return parser::parse_search(&base, &html);
         }
 
         let mut urls = self.fetch_post_sitemap_urls().await?;
@@ -143,11 +145,8 @@ impl HdHub4uClient {
     }
 
     async fn fetch_post_sitemap_urls(&self) -> Result<Vec<String>, HdHub4uError> {
-        let index_url = self
-            .base_url
-            .join("sitemap.xml")
-            .unwrap_or(self.base_url.clone());
-        let index_xml = self.fetch_text(index_url).await?;
+        // Try candidate bases: the sitemap index may only exist on the live mirror.
+        let (_base, index_xml) = self.fetch_first_ok("sitemap.xml").await?;
         let post_sitemap_urls = extract_sitemap_locs(&index_xml, "post-sitemap");
 
         // Fetch all sitemap pages concurrently for speed.
@@ -174,8 +173,7 @@ impl HdHub4uClient {
     }
 
     pub async fn details(&self, id: &str) -> Result<MediaDetails, HdHub4uError> {
-        let url = self.provider_url(id)?;
-        let html = self.fetch_text(url).await?;
+        let (_base, html) = self.fetch_first_ok(id).await?;
         parser::parse_details(id, &html)
     }
 
@@ -185,8 +183,7 @@ impl HdHub4uClient {
         season: usize,
         episode: usize,
     ) -> Result<Vec<Release>, HdHub4uError> {
-        let url = self.provider_url(id)?;
-        let html = self.fetch_text(url).await?;
+        let (_base, html) = self.fetch_first_ok(id).await?;
         parser::parse_releases(&html, season, episode)
     }
 
@@ -239,6 +236,43 @@ impl HdHub4uClient {
     async fn fetch_text(&self, url: Url) -> Result<String, HdHub4uError> {
         let response = self.client.get(url).send().await?.error_for_status()?;
         Ok(response.text().await?)
+    }
+
+    /// Candidate base URLs to try in order: current base first, then the
+    /// known fallback mirrors. The site rotates domains frequently.
+    fn candidate_bases(&self) -> Vec<Url> {
+        let mut seen = std::collections::HashSet::new();
+        let mut out = Vec::new();
+        let mut push = |raw: &str| {
+            if let Ok(url) = Url::parse(raw) {
+                if seen.insert(url.as_str().to_string()) {
+                    out.push(url);
+                }
+            }
+        };
+        push(self.base_url.as_str());
+        for candidate in CANDIDATE_BASE_URLS {
+            push(candidate);
+        }
+        out
+    }
+
+    /// Fetch `path` from the first base that answers. Returns the working
+    /// base URL and the response body so callers can reuse the right host.
+    async fn fetch_first_ok(&self, path: &str) -> Result<(Url, String), HdHub4uError> {
+        let mut last_err: Option<HdHub4uError> = None;
+        for base in self.candidate_bases() {
+            let url = match base.join(path.trim_start_matches('/')) {
+                Ok(url) => url,
+                Err(_) => continue,
+            };
+            match self.fetch_text(url).await {
+                Ok(body) => return Ok((base, body)),
+                Err(e) => last_err = Some(e),
+            }
+        }
+        Err(last_err
+            .unwrap_or_else(|| HdHub4uError::Parse("all hdhub4u domains unreachable".into())))
     }
 
     fn provider_url(&self, id: &str) -> Result<Url, HdHub4uError> {
