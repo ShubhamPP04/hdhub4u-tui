@@ -2154,14 +2154,22 @@ impl App {
 
                         let clean_title = crate::tui::app::clean_moviebox_title(&raw_title);
 
-                        let normalized_query = query
+                        // Match per-token: the site's search uses fuzzy/OR matching,
+                        // so the title rarely contains the full normalized query.
+                        // Keep a result if every query token appears in the title.
+                        let query_tokens: Vec<String> = query
                             .to_lowercase()
-                            .replace(|c: char| !c.is_alphanumeric(), "");
+                            .split(|c: char| !c.is_alphanumeric())
+                            .filter(|t| t.len() >= 2)
+                            .map(String::from)
+                            .collect();
                         let normalized_title = raw_title
                             .to_lowercase()
                             .replace(|c: char| !c.is_alphanumeric(), "");
-                        if !normalized_title.contains(&normalized_query)
-                            && !normalized_query.is_empty()
+                        if !query_tokens.is_empty()
+                            && !query_tokens
+                                .iter()
+                                .all(|tok| normalized_title.contains(tok))
                         {
                             continue;
                         }
