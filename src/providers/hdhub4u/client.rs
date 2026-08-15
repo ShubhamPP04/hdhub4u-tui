@@ -151,11 +151,8 @@ impl HdHub4uClient {
             }
         }
 
-        if items.is_empty() {
-            Err(HdHub4uError::Parse("no search results found".into()))
-        } else {
-            Ok(items)
-        }
+        // Empty results are NOT an error — the UI shows "Nothing found for ...".
+        Ok(items)
     }
 
     async fn fetch_post_sitemap_urls(&self) -> Result<Vec<String>, HdHub4uError> {
